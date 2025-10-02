@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔔 Sonnette</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .bell-icon {
+            font-size: 120px;
+            margin-bottom: 20px;
+            animation: ring 0.5s ease-in-out 3;
+        }
+
+        @keyframes ring {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: rotate(-10deg);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: rotate(10deg);
+            }
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        .status {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .timestamp {
+            font-family: 'Courier New', monospace;
+            color: #667eea;
+            font-weight: bold;
+            margin-top: 15px;
+            font-size: 18px;
+        }
+
+        .info {
+            color: #666;
+            font-size: 16px;
+            margin-top: 25px;
+            line-height: 1.8;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="bell-icon">🔔</div>
+        <h1>Sonnette connectée</h1>
+
+        <div class="status loading" id="status">
+            <div class="spinner"></div>
+            Envoi de la notification en cours...
+        </div>
+
+        <div class="info" id="info">
+            La notification est en cours d'envoi automatiquement
+        </div>
+    </div>
+
+    <script>
+        const topic = "ring-bell-barseghyan-001";
+        const ntfyUrl = `https://ntfy.sh/${topic}`;
+
+        // Fonction pour envoyer automatiquement la notification au chargement
+        async function autoSendNotification() {
+            const status = document.getElementById('status');
+            const info = document.getElementById('info');
+
+            // Obtenir la date et l'heure actuelles
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+
+            const timestamp = `${hours}:${minutes} le ${day}/${month}/${year}`;
+            const message = `🔔 Quelqu'un sonne chez toi à : ${timestamp}`;
+
+            try {
+                const response = await fetch(ntfyUrl, {
+                    method: 'POST',
+                    body: message,
+                    headers: {
+                        'Title': 'Sonnette',
+                        'Priority': 'high',
+                        'Tags': 'bell,door,warning'
+                    }
+                });
+
+                if (response.ok) {
+                    status.innerHTML = `✅ Notification envoyée avec succès !<div class="timestamp">${timestamp}</div>`;
+                    status.className = 'status success';
+                    info.innerHTML = 'Le propriétaire a été notifié de votre visite.<br>Merci de patienter ! 😊';
+                } else {
+                    throw new Error('Erreur lors de l\'envoi');
+                }
+            } catch (error) {
+                status.innerHTML = `❌ Erreur lors de l'envoi<br><small>${error.message}</small>`;
+                status.className = 'status error';
+                info.innerHTML = 'Veuillez réessayer ou contacter le propriétaire directement.';
+            }
+        }
+
+        // Lancer l'envoi automatiquement au chargement de la page
+        window.addEventListener('load', autoSendNotification);
+    </script>
+</body>
+
+</html>
